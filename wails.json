@@ -1,0 +1,15 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "FinEx",
+  "outputfilename": "FinEx",
+  "frontend:install": "",
+  "frontend:build": "",
+  "author": { "name": "nutsze" },
+  "info": {
+    "companyName": "FinEx",
+    "productName": "FinEx",
+    "productVersion": "0.1.0",
+    "copyright": "FinEx",
+    "comments": "Тренажёр для подготовки к экзамену на статус квалифицированного инвестора"
+  }
+}

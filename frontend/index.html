@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FinEx</title>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <a class="brand" href="#home">
+      <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true"><rect width="32" height="32" rx="7" fill="var(--accent)"/><path d="M7 22l6-7 4 4 8-10" fill="none" stroke="var(--on-accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="25" cy="9" r="2.2" fill="var(--on-accent)"/></svg>
+      <span>FinEx</span>
+    </a>
+    <nav class="nav" id="nav">
+      <a href="#home" data-r="home">Обзор</a>
+      <a href="#topics" data-r="topics">Темы и теория</a>
+      <a href="#practice" data-r="practice">Практика</a>
+      <a href="#tasks" data-r="tasks">Расчётные задачи</a>
+      <a href="#lab" data-r="lab">Лаборатория</a>
+      <a href="#sim" data-r="sim">Торговый тренажёр</a>
+      <a href="#exam" data-r="exam">Демоэкзамен</a>
+    </nav>
+    <div class="side-foot">
+      <button class="btn ghost sm" id="themeBtn" type="button">Тема: авто</button>
+      <div class="ver">версия 0.1</div>
+    </div>
+  </aside>
+  <main class="main"><div class="page" id="view"></div></main>
+</div>
+<script src="js/core.js"></script>
+<script src="js/data/topics.js"></script>
+<script src="js/data/questions.js"></script>
+<script src="js/data/tasks.js"></script>
+<script src="js/app.js"></script>
+<script src="js/lab.js"></script>
+<script src="js/sim.js"></script>
+<script>FX.start();</script>
+</body>
+</html>
