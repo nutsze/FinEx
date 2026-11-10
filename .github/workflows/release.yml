@@ -26,6 +26,8 @@ jobs:
           name: FinEx ${{ github.event.inputs.tag || github.ref_name }}
           target_commitish: ${{ github.sha }}
           files: build/bin/FinEx.exe
+          prerelease: false
+          make_latest: true
           body: |
             Тренажёр для подготовки к экзамену на статус квалифицированного инвестора.
 
