@@ -68,18 +68,19 @@
       '<div class="kpi"><div class="l">Практика</div><div class="v">' + seen + ' / ' + total + '</div><div class="s">вопросов пройдено' + (mist ? ', ошибок к повтору: ' + mist : '') + '</div></div>' +
       '<div class="kpi"><div class="l">Лучший экзамен</div><div class="v">' + (S.exams.length ? best + ' / ' + EXAM.total : '—') + '</div><div class="s">' + (S.exams.length ? (best >= EXAM.pass ? 'порог пройден' : 'до порога ' + (EXAM.pass - best)) : 'попыток ещё не было') + '</div></div>' +
       '</div>' +
-      '<div class="row"><a class="btn primary" href="#' + next[1] + '">' + next[0] + '</a>' + (mist ? '<button class="btn" data-act="mist">Работа над ошибками (' + mist + ')</button>' : '') + '</div>' +
+      '<div class="row"><a class="btn primary" href="#' + next[1] + '">' + next[0] + '</a>' + (mist ? '<button class="btn" data-act="mist">Работа над ошибками (' + mist + ')</button>' : '') + '<button class="btn" data-act="demo">50 вопросов по темам демо-теста Мосбиржи</button></div>' +
       '<div class="card"><h2>Прогресс по темам</h2><div class="tw"><table class="t"><thead><tr><th>№</th><th>Тема</th><th class="r">Уроки</th><th class="r">Вопросы</th><th class="r">Точность</th><th>Освоено</th></tr></thead><tbody>' + rows + '</tbody></table></div></div>' +
       '<div class="split"><div class="card"><h2>Формат экзамена</h2><div class="kv">' +
       '<span>Вопросов</span><span class="v">50</span><span>Время</span><span class="v">60 минут</span>' +
       '<span>Проходной балл</span><span class="v">35 из 50 (70%)</span><span>Типы вопросов</span><span class="v">один / несколько ответов, кейсы</span>' +
-      '<span>Пересдача</span><span class="v">не ранее следующего дня</span></div>' +
+      '<span>Пересдача</span><span class="v">не ранее следующего дня</span><span>Ставки в ответах</span><span class="v">в долях единицы: 0.1059 = 10,59%</span></div>' +
       '<p class="muted" style="font-size:13.5px">Экзамен проводится на платформе «Финуслуги» Московской биржи; вопросы выбираются случайно из общей базы. Условия и стоимость уточняйте на официальной странице.</p></div>' +
       '<div class="card"><h2>О материалах</h2><p style="font-size:14.5px">Теория и вопросы FinEx составлены самостоятельно по открытой программе экзамена и не совпадают с официальной базой. Приложение — учебный тренажёр, а не инвестиционная рекомендация. Цены и бумаги в торговом тренажёре вымышленные.</p>' +
       '<div class="row">' + (askReset ? '<span class="muted">Удалить весь прогресс?</span><button class="btn sm sell" data-act="resetYes">Да, сбросить</button><button class="btn sm" data-act="resetNo">Отмена</button>' : '<button class="btn sm ghost" data-act="reset">Сбросить прогресс</button>') + '</div></div></div>';
     act(el, {
       go: function (a) { FX.go(a); },
       mist: function () { startPractice({ mistakes: true }); },
+      demo: function () { startPractice({ topic: 'demo', n: 50 }); },
       reset: function () { askReset = true; FX.render(); },
       resetNo: function () { askReset = false; FX.render(); },
       resetYes: function () { askReset = false; FX.resetProgress(); FX.session = null; FX.exam = null; FX.render(); }
@@ -135,6 +136,7 @@
   function startPractice(o) {
     var pool, title;
     if (o.mistakes) { pool = FX.mistakes(); title = 'Работа над ошибками'; }
+    else if (o.topic === 'demo') { pool = FX.Q.filter(function (q) { return q.demo; }); title = 'По темам демо-теста Мосбиржи'; }
     else if (o.topic) { pool = FX.qByTopic(o.topic); title = FX.topic(o.topic).title; }
     else { pool = FX.Q; title = 'Все темы'; }
     if (!o.mistakes) {
@@ -153,9 +155,9 @@
     if (!ss || !ss.items.length) {
       var mist = FX.mistakes().length;
       el.innerHTML = '<div class="head"><h1>Практика</h1><p>Ответ проверяется сразу, к каждому вопросу есть разбор. Сначала выдаются вопросы, которые вы ещё не решали или решили неверно.</p></div>' +
-        '<div class="card"><div class="row"><label class="f">Тема<select id="pTopic"><option value="">Все темы</option>' +
+        '<div class="card"><div class="row"><label class="f">Тема<select id="pTopic"><option value="">Все темы</option><option value="demo"' + (pSetup.topic === 'demo' ? ' selected' : '') + '>По темам демо-теста Мосбиржи (50)</option>' +
         FX.topics.map(function (t) { return '<option value="' + t.id + '"' + (pSetup.topic === t.id ? ' selected' : '') + '>' + t.n + '. ' + t.title + '</option>'; }).join('') + '</select></label>' +
-        '<label class="f">Количество<select id="pN">' + [5, 10, 20, 30].map(function (n) { return '<option' + (pSetup.n === n ? ' selected' : '') + '>' + n + '</option>'; }).join('') + '</select></label></div>' +
+        '<label class="f">Количество<select id="pN">' + [5, 10, 20, 30, 50].map(function (n) { return '<option' + (pSetup.n === n ? ' selected' : '') + '>' + n + '</option>'; }).join('') + '</select></label></div>' +
         '<div class="row"><button class="btn primary" data-act="start">Начать</button>' +
         (mist ? '<button class="btn" data-act="mist">Работа над ошибками (' + mist + ')</button>' : '') + '</div></div>' +
         '<div class="card"><h2>В банке ' + FX.Q.length + ' вопросов</h2><div class="kv">' + FX.topics.map(function (t) { var s = FX.topicStats(t.id); return '<span>' + t.title + '</span><span class="v">' + s.right + ' / ' + s.total + '</span>'; }).join('') + '</div></div>';
