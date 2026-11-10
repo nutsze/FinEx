@@ -2,6 +2,12 @@ name: release
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Тег релиза'
+        required: true
+        default: 'v0.1'
 permissions:
   contents: write
 jobs:
@@ -16,4 +22,18 @@ jobs:
       - run: wails build -platform windows/amd64 -skipbindings
       - uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          name: FinEx ${{ github.event.inputs.tag || github.ref_name }}
+          target_commitish: ${{ github.sha }}
           files: build/bin/FinEx.exe
+          body: |
+            Тренажёр для подготовки к экзамену на статус квалифицированного инвестора.
+
+            Скачайте `FinEx.exe` и запустите — установка не нужна. Требуется Windows 10/11 с Microsoft Edge WebView2 (в Windows 11 есть по умолчанию).
+
+            - Теория: 6 блоков программы, 25 уроков
+            - Практика: 153 вопроса с разбором, работа над ошибками
+            - 26 типов расчётных задач со случайными числами и решением
+            - Лаборатория: опционные стратегии и калькулятор облигаций
+            - Торговый тренажёр: акции, облигации, фьючерсы, плечо, НПР1/НПР2, маржин-колл, задания
+            - Демоэкзамен: 50 вопросов, 60 минут, проходной балл 35
