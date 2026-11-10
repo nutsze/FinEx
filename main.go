@@ -20,11 +20,12 @@ func main() {
 		Height:           860,
 		MinWidth:         420,
 		MinHeight:        560,
-		BackgroundColour: &options.RGBA{R: 238, G: 241, B: 244, A: 255},
+		BackgroundColour: &options.RGBA{R: 14, G: 19, B: 24, A: 255},
+		WindowStartState: options.Maximised,
 		AssetServer:      &assetserver.Options{Assets: assets},
 		Windows: &windows.Options{
 			WebviewUserDataPath: "",
-			Theme:               windows.SystemDefault,
+			Theme:               windows.Dark,
 		},
 	})
 	if err != nil {

@@ -3,18 +3,19 @@ window.FX = { views: {}, topics: [], Q: [], tasks: [] };
 (function (FX) {
   'use strict';
   var KEY = 'finex.v1';
-  function def() { return { lessons: {}, q: {}, exams: [], tasks: {}, missions: {}, sim: null, theme: 'auto' }; }
+  function def() { return { lessons: {}, q: {}, exams: [], tasks: {}, missions: {}, sim: null, theme: 'dark', scale: 'auto', v: 2 }; }
   var state = def();
   try {
     var raw = JSON.parse(localStorage.getItem(KEY) || '{}');
     for (var k in raw) state[k] = raw[k];
+    if (!raw.v) { state.theme = 'dark'; state.scale = 'auto'; state.v = 2; } // переход с 0.1: тёмная тема по умолчанию
   } catch (e) { /* хранилище недоступно — работаем без сохранения */ }
   FX.state = state;
   FX.save = function () { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
   FX.resetProgress = function () {
-    var theme = state.theme; var d = def();
+    var theme = state.theme, scale = state.scale; var d = def();
     for (var k in d) state[k] = d[k];
-    state.theme = theme; FX.save();
+    state.theme = theme; state.scale = scale; FX.save();
   };
 
   // ---------- утилиты ----------
@@ -86,12 +87,53 @@ window.FX = { views: {}, topics: [], Q: [], tasks: [] };
   };
 
   // ---------- тема оформления ----------
-  var themeNames = { auto: 'авто', light: 'светлая', dark: 'тёмная' };
+  var themeNames = { auto: 'как в системе', light: 'светлая', dark: 'тёмная' };
+  function rt() { return window.runtime || null; } // среда Wails (в браузере отсутствует)
   function applyTheme() {
     var r = document.documentElement;
     if (state.theme === 'auto') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', state.theme);
     var b = document.getElementById('themeBtn'); if (b) b.textContent = 'Тема: ' + themeNames[state.theme];
+    try {
+      var w = rt();
+      if (w && w.WindowSetDarkTheme) { if (state.theme === 'dark') w.WindowSetDarkTheme(); else if (state.theme === 'light') w.WindowSetLightTheme(); else w.WindowSetSystemDefaultTheme(); }
+    } catch (e) {}
     if (FX.onTheme) FX.onTheme();
+  }
+
+  // ---------- масштаб интерфейса (2K / 4K) ----------
+  // В режиме «авто» интерфейс увеличивается пропорционально ширине окна сверх 1920 точек,
+  // чтобы на мониторах 2560×1440 и 3840×2160 текст и таблицы не были мелкими.
+  FX.zoom = 1;
+  function autoZoom() { return Math.max(1, Math.min(2.5, Math.round(window.innerWidth / 1920 * 20) / 20)); }
+  function applyScale(rerender) {
+    var z = state.scale === 'auto' ? autoZoom() : Math.max(0.8, Math.min(2.5, +state.scale || 1));
+    var b = document.getElementById('scaleBtn');
+    if (b) b.textContent = 'Масштаб: ' + (state.scale === 'auto' ? 'авто · ' : '') + Math.round(z * 100) + '%';
+    if (z === FX.zoom) return;
+    FX.zoom = z;
+    document.documentElement.style.zoom = z === 1 ? '' : String(z);
+    if (rerender) FX.render();
+  }
+  function stepScale(d) {
+    var cur = state.scale === 'auto' ? autoZoom() : +state.scale;
+    state.scale = Math.max(0.8, Math.min(2.5, Math.round((cur + d) * 10) / 10));
+    FX.save(); applyScale(true);
+  }
+
+  // ---------- полноэкранный режим (F11) ----------
+  var fs = false;
+  function fsLabel() { var b = document.getElementById('fsBtn'); if (b) b.textContent = fs ? 'Выйти из полного экрана · F11' : 'Во весь экран · F11'; }
+  function toggleFs() {
+    var w = rt();
+    if (w && w.WindowFullscreen) {
+      var set = function (on) { fs = on; if (on) w.WindowFullscreen(); else w.WindowUnfullscreen(); fsLabel(); };
+      try { w.WindowIsFullscreen().then(function (cur) { set(!cur); }, function () { set(!fs); }); } catch (e) { set(!fs); }
+      return;
+    }
+    var d = document;
+    try {
+      if (d.fullscreenElement) d.exitFullscreen(); else d.documentElement.requestFullscreen().catch(function () {});
+    } catch (e) {}
   }
 
   // ---------- маршрутизация ----------
@@ -111,11 +153,27 @@ window.FX = { views: {}, topics: [], Q: [], tasks: [] };
     lastHash = h;
   };
   FX.start = function () {
-    applyTheme();
+    applyTheme(); applyScale(false); fsLabel();
     document.getElementById('themeBtn').addEventListener('click', function () {
-      state.theme = state.theme === 'auto' ? 'light' : state.theme === 'light' ? 'dark' : 'auto';
+      state.theme = state.theme === 'dark' ? 'light' : state.theme === 'light' ? 'auto' : 'dark';
       FX.save(); applyTheme();
     });
+    document.getElementById('scaleBtn').addEventListener('click', function () {
+      var steps = ['auto', 1, 1.25, 1.5, 1.75, 2], i = steps.indexOf(state.scale);
+      state.scale = steps[(i + 1) % steps.length]; FX.save(); applyScale(true);
+    });
+    document.getElementById('fsBtn').addEventListener('click', toggleFs);
+    document.addEventListener('fullscreenchange', function () { fs = !!document.fullscreenElement; fsLabel(); });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'F11') { e.preventDefault(); toggleFs(); return; }
+      if ((e.ctrlKey || e.metaKey) && !e.altKey) {
+        if (e.key === '=' || e.key === '+') { e.preventDefault(); stepScale(0.1); }
+        else if (e.key === '-') { e.preventDefault(); stepScale(-0.1); }
+        else if (e.key === '0') { e.preventDefault(); state.scale = 'auto'; FX.save(); applyScale(true); }
+      }
+    });
+    var rz = null;
+    window.addEventListener('resize', function () { clearTimeout(rz); rz = setTimeout(function () { applyScale(true); }, 150); });
     window.addEventListener('hashchange', FX.render);
     FX.render();
   };
